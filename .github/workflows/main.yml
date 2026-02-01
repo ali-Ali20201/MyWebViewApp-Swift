@@ -7,9 +7,17 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build App
         run: |
-          xcodebuild build -project MyWebViewApp-Swift.xcodeproj -scheme MyWebViewApp-Swift -sdk iphoneos CODE_SIGNING_ALLOWED=NO
-          mkdir Payload
-          cp -r build/Release-iphoneos/*.app Payload/
+          # البحث عن ملف المشروع تلقائياً
+          PROJECT_NAME=$(ls -d *.xcodeproj | head -n 1)
+          SCHEME_NAME=$(xcodebuild -list -project "$PROJECT_NAME" | grep -A 5 "Schemes:" | tail -n 1 | xargs)
+          
+          echo "Building Project: $PROJECT_NAME with Scheme: $SCHEME_NAME"
+          
+          xcodebuild build -project "$PROJECT_NAME" -scheme "$SCHEME_NAME" -sdk iphoneos CODE_SIGNING_ALLOWED=NO
+          
+          mkdir -p Payload
+          # البحث عن المجلد الناتج ونسخه
+          find build -name "*.app" -exec cp -r {} Payload/ \;
           zip -r MyApp.ipa Payload
       - name: Upload IPA
         uses: actions/upload-artifact@v2
